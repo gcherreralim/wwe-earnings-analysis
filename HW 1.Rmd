@@ -1,0 +1,1242 @@
+---
+title: "Homework 1"
+subtitle: "Unstructured"
+author: "Gabriel Herrera-Lim - `r format(Sys.Date(), '%b %d, %Y')`"
+output:
+  html_document:
+    theme: cerulean
+    highlight: pygments
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    code_folding: "show"
+    includes:
+      after_body: "/Volumes/GoogleDrive/My Drive/Laptop Files/1920A2/General Files/RMD/footer.html"
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+<style>
+#TOC {
+  background: url("https://www.freepnglogos.com/uploads/wwe-logo-white-15.png");
+  background-size: 64px 64px;
+  background-position: top center;
+  padding-top: 60px !important;
+  background-repeat: no-repeat;
+}
+.list-group-item.active, .list-group-item.active:focus, .list-group-item.active:hover {
+  color: #FFFFFF;
+  background-color: #d7182a;
+  font-family: Avenir Next;
+  font-weight: 700;
+}
+.list-group-item {
+  color: #FFFFFF;
+  background-color: #2B2D2F;
+}
+.nav>li>a {
+  position: relative;
+  display: block;
+  color: #d7182a;
+  background-color: white;
+}
+  .nav>li>a:hover {
+    background-color: #d7182a;
+    color: black;
+  }
+.nav-pills > li.active > a, .nav-pills > li.active > a:focus {
+  color: #FFFFFF;
+  background-color: #d7182a;
+}
+  .nav-pills > li.active > a:hover {
+    background-color: black;
+    color: #d7182a;
+  }
+</style>
+
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 12px;
+      font-family: Avenir Next;
+      color: white;
+      text-align: justify;
+      background-color: #2B2D2F;
+  }
+td {  /* Table  */
+  font-size: 8px;
+}
+h1.title {
+  font-size: 38px;
+  color: #FFFFFF;
+  font-family: Avenir Next;
+  font-style: bold;
+  font-weight: 800;
+  padding-top: 10px;
+  text-align: center;
+  text-decoration: underline;
+  margin-top: 20px;
+  margin-bottom: 5px;
+}
+h3.subtitle {
+  font-size: 25px;
+  color: #FFFFFF;
+  font-family: Avenir Next;
+  font-style: bold;
+  font-weight: 800;
+  text-align: center;
+  margin: 0px;
+}
+h4 {
+  font-size: 18px;
+  font-family: Avenir Next;
+  color: white;
+  font-weight: 700;
+}
+h4.author {
+  font-size: 20px;
+  color: #FFFFFF;
+  font-family: Avenir Next;
+  font-style: bold;
+  font-weight: 500;
+  text-align: center;
+  margin: 0px;
+}
+h2 { /* Header 3 */
+  font-size: 18px;
+  font-family: Avenir Next;
+  color: white;
+  font-weight: 700;
+}
+code.r{ /* Code block */
+    font-size: 12px;
+    font-family: Avenir Next;
+    color: #2B2D2F;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 10px;
+    font-family: Avenir Next;
+    color: #AE9142
+    background-color: #2B2D2F;
+}
+blockquote {
+    padding: 10px 20px;
+    margin: 0 0 20px;
+    font-size: 12px;
+    border-left: 5px solid #d7182a;
+}
+</style>
+
+***
+
+## Data
+The data is on Sakai in the `data` folder. You will be working with the data in the file called *wweCalls*. You should use functions within R (e.g., `unzip` or `unz`) to unzip it.
+
+```{r, message = FALSE}
+filepath = "~/Google Drive File Stream/My Drive/Laptop Files/1920B1/MW 1 Unstructured Data Analytics/02 Assignments/Homework 1/Homework 1/wweCalls.zip"
+
+wweCalls <- unzip(filepath, junkpaths = TRUE, exdir = tempdir())
+invisible(list2env(setNames(lapply(wweCalls, read.csv, header = TRUE), basename(tools::file_path_sans_ext(wweCalls))), globalenv()))
+```
+
+## Bronze {.tabset .tabset-fade .tabset-pills}
+
+### **Reading and Cleaning Data**
+Read all of the parsed transcripts into R. You can do them individually, but that is a horrible idea and I don't recommend it. Instead, use the `list.files()` function and read files from the resultant object.
+
+Perform some initial exploration of the text and perform any initial cleaning. This is entirely up to you to do whatever you consider necessary.
+
+```{r, message = FALSE}
+# Combining dataframes
+library(tidyverse)
+library(dplyr)
+library(data.table)
+dfs = Filter(function(x) is(x, "data.frame"), mget(ls()))
+allfiles = rbindlist(dfs[1:33], use.names = TRUE, idcol = "file")
+
+# str(allfiles)
+
+#removing operator, selecting out unnecessary columns, and changing some file types
+allfiles = allfiles %>%
+  mutate(file = as.factor(file)) %>%
+  filter(name != "operator") %>%
+  select(-firstName, -firstLast, -ticker) %>%
+  mutate(text = as.character(text)) %>%
+  mutate(name = as.character(name))
+
+#cleaning names
+# unique(sort(as.character(allfiles$name)))
+
+allfiles$name = gsub("ali migharabi","ali mogharabi", allfiles$name)
+allfiles$name = gsub(".*kilmery.*","dan kilmary", allfiles$name)
+allfiles$name = gsub(".*alpine.*","dennis macalpine", allfiles$name)
+allfiles$name = gsub(".*eduardo.*","eduardo bush", allfiles$name)
+allfiles$name = gsub(".*frank ser.*","frank serp", allfiles$name)
+allfiles$name = gsub(".*james clinic.*","james clinit", allfiles$name)
+allfiles$name = gsub(".*jared schr*","jared schramm", allfiles$name)
+allfiles$name = gsub(".*mario.*","mario cibelli", allfiles$name)
+allfiles$name = gsub(".*goldstein.*","michele goldstein", allfiles$name)
+allfiles$name = gsub(".*mike si.*","michael sileck", allfiles$name)
+allfiles$name = gsub(".*mike ke.*","michael kelman", allfiles$name)
+allfiles$name = gsub(".*nayar.*","nader tavakoli", allfiles$name)
+allfiles$name = gsub(".*phil.*","philip livingston", allfiles$name)
+allfiles$name = gsub(".*ingrassia.*","richard ingrassia", allfiles$name)
+allfiles$name = gsub(".*rouse.*","robert routh", allfiles$name)
+
+allfiles = allfiles %>%
+  filter(name != "as a reminder") %>%
+  filter(name != "india is the other up and coming for us. we have a wonderful tv deal with zee tv. it used to be -- i think it was -- its taj") %>%
+  filter(name != "thomson reuters media")
+
+#cleaning organization names
+#unique(sort(as.character(allfiles$organization)))
+allfiles$organization = gsub(",","Marathon Partners", allfiles$organization)
+allfiles$organization = gsub(".*B. Riley.*","B. Riley and Company", allfiles$organization)
+allfiles$organization = gsub(".*Eaglerock.*","EagleRock Capital", allfiles$organization)
+allfiles$organization = gsub(".*Gabelli.*","Gabelli and Company", allfiles$organization)
+allfiles$organization = gsub(".*Sachs.*","Goldman Sachs Equity", allfiles$organization)
+allfiles$organization = gsub(".*Hudson.*","Hudson Square Research", allfiles$organization)
+allfiles$organization = gsub(".*Jefferies.*","Jefferies and Company", allfiles$organization)
+allfiles$organization = gsub(".*Marathan.*","Marathon Partners", allfiles$organization)
+allfiles$organization = gsub(".*Alpine.*","MacAlpine and Associates", allfiles$organization)
+allfiles$organization = gsub(".*Nat.*","Natexis", allfiles$organization)
+allfiles$organization = gsub(".*Noble.*","Noble Financial", allfiles$organization)
+allfiles$organization = gsub(".*Research Associates.*","Research Associates", allfiles$organization)
+allfiles$organization = gsub(".*Roth.*","Roth Capital Partners", allfiles$organization)
+allfiles$organization = gsub(".*Sido.*","Sidoti and Company", allfiles$organization)
+allfiles$organization = gsub(".*Soleil.*","Soleil Resarch Associates", allfiles$organization)
+allfiles$organization = gsub(".*Sterne.*","Stern Agee and Leach", allfiles$organization)
+allfiles$organization = gsub(".*Susqueh.*","Susquehanna Financial Group", allfiles$organization)
+allfiles$organization = gsub(".*Terrier.*","Terrier Partners", allfiles$organization)
+allfiles$organization = gsub(".*Wrestling.*","WWE", allfiles$organization)
+allfiles$organization = gsub(".*Zimmer.*","Zimmer Lucas", allfiles$organization)
+
+#cleaning titles
+#unique(sort(as.character(allfiles$title)))
+allfiles$title = gsub(".*CEO.*","CEO", allfiles$title) #changing all CEOs to just CEO
+allfiles$title = gsub(".*CFO.*","CFO", allfiles$title) #changing all CFOs to just CFO
+allfiles$title = gsub(".*Executive.*","CEO", allfiles$title) #changing all with the word Executive into CEO
+allfiles$title = gsub(".*Fiancial.*","CFO", allfiles$title) #fixed typo
+allfiles$title = gsub(".*Chief Financial Officer.*","CFO", allfiles$title)
+allfiles$title = gsub(".*Analysis.*","Director - Planning and Analysis", allfiles$title)
+allfiles$title = gsub(".*Analyst.*","Analyst", allfiles$title)
+allfiles$title = gsub(".*IR.*","VP - Planning and Investor Relations", allfiles$title)
+allfiles$title = gsub(".*Investor.*","VP - Planning and Investor Relations", allfiles$title)
+allfiles$title = gsub(".*Accounting.*","CAO", allfiles$title)
+#some people have different positions throughout the course of this timeline, some positions are occupied by different people throughout the course of this timeline
+
+#str(allfiles)
+
+allfiles = allfiles %>%
+  mutate(name = as.factor(name)) %>%
+  mutate(organization = as.factor(organization)) %>%
+  mutate(title = as.factor(title)) %>%
+  select(-file)
+
+allfiles$date = as.Date(allfiles$date, format = "%d-%b-%y")
+
+```
+
+
+### **Sentiment Analysis** {.tabset .tabset-fade .tabset-pills}
+Perform sentiment analyses on the texts. Given that these are earnings calls, you will likely want to use Loughran and McDonald's lexicon. This lexicon can be found in the `lexicon` package and in the `textdata` package. You should also explore the various `nrc` lexicons. Exploring the versions offered in `textdata` is a good start. Select any of the emotions from the various `nrc` lexicons (found within `textdata`) and perform sentiment analyses using that particular emotion. A good approach would be to use the words found within `textdata` and find them within `lexicon`.
+
+Below is an example of how you might get data from `textdata`. 
+
+```{r}
+library(textdata)
+library(lexicon)
+library(tidytext)
+library(rmarkdown)
+
+get_sentiments("nrc")
+
+nrcWord = textdata::lexicon_nrc()
+
+nrcValues = lexicon::hash_sentiment_nrc
+
+nrcDominance = textdata::lexicon_nrc_vad()
+
+# You will likely want to make good use of %in% or filter.
+```
+
+How you choose to aggregate sentiment is entirely up to you, but some reasonable ideas would be to aggregate them by indiviual, by role within the call, or the call as a whole. What can be learned about the sentiment from call to call?
+
+> I would want to aggregate sentiment/do sentiment analysis on the following:  
+1. By individual and title  
+2. By call,title, and quarter  
+4. By organization  
+
+#### **Applying nrcValues**
+```{r}
+allfiles = allfiles %>%
+  mutate(id = 1:n()) %>%
+  select(id, everything())
+
+allfiles_text = allfiles %>%
+  select(id, text) 
+
+tokens = allfiles_text %>%
+  tidytext::unnest_tokens(tbl = ., output = word, input = text)
+
+value_tokens = tokens %>%
+  inner_join(nrcValues, by = c("word" = "x")) %>%
+  group_by(id) %>%
+  summarize(average_value = mean(y))
+
+value_table = allfiles %>%
+  inner_join(value_tokens, by = c("id" = "id"))
+```
+
+First, let's look at the sentiment per individual/title.
+
+```{r}
+value_name = value_table %>%
+  na.omit() %>%
+  group_by(name, title) %>%
+  summarize(average_value = mean(average_value)) %>%
+  arrange(desc(average_value))
+
+paged_table(value_name)
+```
+
+> We can see here that Analysts generally have a sporadic distribution in terms of their value in sentiment - which is understandable because different calls could lead to different sentiments for the analysts. Let's see our results without any analysts (i.e. internally within the WWE).
+
+```{r}
+value_name_noanalyst = value_table %>%
+  na.omit() %>%
+  filter(title != "Analyst") %>%
+  group_by(name, title) %>%
+  summarize(average_value = mean(average_value)) %>%
+  arrange(desc(average_value))
+
+paged_table(value_name_noanalyst)
+```
+
+> From here, we can infer a lot of things. First, we can see that Michael Weitz, Tom Gibbons, and Michele Goldstein (all VPs for Planning and Investor Relations, but at different times) have vastly differing sentiments on average. Weitz would have generally positive sentiments through his different calls, while Goldstein and Gibbons would have relatively less positive sentiments. Another, more interesting thing we can see from this is that in general, CEOs and COOs would have higher sentiment than those in finance-related positions like the CFO and CAO. This could mean that those in financial-related positions are more realistic or tend to think on the pessimistic side of their finances to be cautious, while those in other leadership positions (particularly those who are primary decision-makers or faces of the organization) tend to build up their company and their situation a little bit more.
+
+Next, let's see the situation per call and quarter.
+
+```{r}
+value_date = value_table %>%
+  na.omit() %>%
+  group_by(date, title) %>%
+  summarize(average_value = mean(average_value)) %>%
+  arrange(date, desc(average_value))
+
+value_quarter = value_table %>%
+  na.omit() %>%
+  group_by(quarter) %>%
+  summarize(average_value = mean(average_value)) %>%
+  arrange(desc(average_value))
+```
+
+
+```{r}
+paged_table(value_date)
+paged_table(value_quarter)
+```
+
+> What we can get from the per-call (with title) sentiments is that in each call, most calls would have people with very different average sentiments throughout the call. This is understandable, since the purpose of these calls is to discuss situations and since these people have different roles within the call. It's interesting to see that the latter two quarters (Q3 and Q4) contain generally more positive sentiment than the first two quarters. Q4 and Q3 have very similar average sentiment while Q2 and Q1 have very similar ones as well.
+
+Finally, let's see how it looks per organization.
+
+```{r}
+value_org = value_table %>%
+  na.omit() %>%
+  group_by(organization) %>%
+  summarize(count = n(),
+            average_value = mean(average_value)) %>%
+  arrange(desc(average_value))
+
+paged_table(value_org)
+```
+
+> Without really knowing the background of these organizations, it's hard for me to understand why each organization has a certain sentiment value. However, I can see two things: (1) the WWE has a relatively middling average sentiment juxtaposed with the rest of the organizations, and (2) the more calls/lines there are for the organization, the lower their average sentiment seems to be.
+
+
+#### **Applying nrcDominance**
+
+```{r}
+dom_tokens = tokens %>%
+  inner_join(nrcDominance, by = c("word" = "Word")) %>%
+  group_by(id) %>%
+  summarize(ave_valence = mean(Valence),
+            ave_arousal = mean(Arousal),
+            ave_dominance = mean(Dominance))
+
+dom_table = allfiles %>%
+  inner_join(dom_tokens, by = c("id" = "id"))
+```
+
+Again, let's look at the sentiment per individual/title.
+
+```{r}
+dom_name = dom_table %>%
+  na.omit() %>%
+  group_by(name, title) %>%
+  summarize(ave_valence = mean(ave_valence),
+            ave_arousal = mean(ave_arousal),
+            ave_dominance = mean(ave_dominance)) %>%
+  arrange(desc(ave_valence))
+
+paged_table(dom_name)
+```
+
+> If arranged by valence, we can see that analysts have the highest average valence - meaning that the words they use evoke more pleasantness relative to the other people in the calls. This is understandable because their jobs require them, when working with clients/corporations, to be more pleasant in their use of words, whether or not the situation is positive. Aside from the analysts, I could see that the company leaders with the highest valence were the CEOs and members of the Investor Relations teams (with some exceptions). As the faces of the company in the eyes of investors, it's important for them to evoke pleasantness when dealing with investors and other share/stakeholders of their company. This is also the case if the table was arranged by arousal, with some differences in the middle. Once noticeable difference is when we arrange the table by dominance. In this case, the CFO and other financial-related leaders have higher relative ratings. This could mean that these officers become more dominant in that they would want to control the situation and be very clear as to what they want to convey.
+
+
+Next, let's look at the situation per call and quarter.
+
+```{r}
+dom_date = dom_table %>%
+  na.omit() %>%
+  group_by(date) %>%
+  summarize(ave_valence = mean(ave_valence),
+            ave_arousal = mean(ave_arousal),
+            ave_dominance = mean(ave_dominance)) %>%
+  arrange(desc(ave_dominance))
+
+paged_table(dom_date)
+```
+
+> We could see a shift in pleasantness throughout the years, with the latter years in the list having mostly higher valence. The case isn't the same, however, if we arrange the table by arousal and dominance. However, this does not really tell us much. Let's see how it looks per quarter.
+
+```{r}
+dom_quarter = dom_table %>%
+  na.omit() %>%
+  group_by(quarter) %>%
+  summarize(ave_valence = mean(ave_valence),
+            ave_arousal = mean(ave_arousal),
+            ave_dominance = mean(ave_dominance)) %>%
+  arrange(desc(ave_valence))
+
+paged_table(dom_quarter)
+```
+
+> The situation seems pretty similar in the case of valence, arousal, and dominance throughout all 4 quarters (though Q3 and Q4 slightly have an edge over the earlier two quarters).
+
+Lastly, let's see the difference per organization
+
+```{r}
+dom_org = dom_table %>%
+  na.omit() %>%
+  group_by(organization) %>%
+  summarize(ave_valence = mean(ave_valence),
+            ave_arousal = mean(ave_arousal),
+            ave_dominance = mean(ave_dominance)) %>%
+  arrange(desc(ave_dominance))
+
+paged_table(dom_org)
+```
+
+> Surprisingly, we can see that the WWE actually has a lower valence and arousal than average. We could say that they are more dominant in the words that they use as opposed to the other institutions. 
+
+#### **Applying nrcWord**
+
+Let's take a look at the different emotions under nrcWord:
+
+```{r, echo = FALSE}
+emotions = nrcWord %>%
+  group_by(sentiment) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count))
+
+paged_table(emotions)
+```
+
+We can see that negative and positive emotions, since more general, have the highest count. Since these are investment calls, I decided to use trust (also has a reasonable amount of words to test on) as the emotion to test.
+
+```{r}
+trust_words = nrcWord %>%
+  filter(sentiment == "trust")
+
+trust_table = tokens %>%
+  left_join(trust_words, by = c("word" = "word"))
+
+trust_table$sentiment[trust_table$sentiment == "trust"] = 1
+trust_table$sentiment[is.na(trust_table$sentiment)] = 0
+
+trust_table = trust_table %>%
+  rename("trust" = "sentiment") %>%
+  mutate(trust = as.numeric(trust))
+
+trust_table2 = trust_table %>%
+  group_by(id) %>%
+  summarize(sum_trust = sum(trust))
+
+trust_table3 = allfiles %>%
+  inner_join(trust_table2, by = c("id" = "id"))
+```
+
+Let's see the occurrences of "trust-worthy" words for the following: individual, call, quarter, and organization.
+
+First, let's do it by individual.
+```{r}
+trust_name = trust_table3 %>%
+  na.omit() %>%
+  group_by(name, title) %>%
+  summarize(speakcount = n(),
+            sum_trust = sum(sum_trust),
+            perc_trust = sum_trust/speakcount) %>%
+  arrange(desc(perc_trust))
+
+paged_table(trust_name)
+```
+
+> It's evident here that those with technical and leadership roles are the ones that use "trust-worthy" words most often. Their purpose in these calls is to make their situation sound as high-potential as possible. CAOs and CFOs aim to serve the facts/technical aspects of their situation in order for analysts and potential investors to trust them. CEOs and Investor Relations leads, on the other hand, aim to sell the company's situation. Because of this, they try to use words that would make them and their company seem as reliable as possible.
+
+
+Let's see what happens when we group them by quarter and call. In this case, I decided to filter out any analysts from the tables, as I wanted to see this from the perspectives of the company officials.
+
+```{r}
+trust_quarter = trust_table3 %>%
+  na.omit() %>%
+  filter(title != "Analyst") %>%
+  group_by(quarter) %>%
+  summarize(speakcount = n(),
+            sum_trust = sum(sum_trust),
+            perc_trust = sum_trust/speakcount) %>%
+  arrange(desc(perc_trust))
+
+paged_table(trust_quarter)
+```
+
+```{r}
+trust_date = trust_table3 %>%
+  na.omit() %>%
+  filter(title != "Analyst") %>%
+  group_by(date, quarter) %>%
+  summarize(speakcount = n(),
+            sum_trust = sum(sum_trust),
+            perc_trust = sum_trust/speakcount) %>%
+  arrange(desc(perc_trust))
+
+paged_table(trust_date)
+```
+
+> We can see that in both situations, Q3 and Q4 calls use the most (relatively) "trust-worthy" words. This could mean that these quarters are more crucial in selling the status of their company. It could also mean that at this point in their fiscal year, they would have more facts at their disposal to make a case for their sale.
+
+What about per organization?
+
+```{r}
+trust_org = trust_table3 %>%
+  na.omit() %>%
+  group_by(organization) %>%
+  summarize(speakcount = n(),
+            sum_trust = sum(sum_trust),
+            perc_trust = sum_trust/speakcount) %>%
+  arrange(desc(perc_trust))
+
+paged_table(trust_org)
+```
+
+> In this case, it's apparent that the WWE would try to use as many "trustworthy" words and facts as much as possible - since they are trying to make the company look as reliable and attractive as possible. As for the other investment companies, it's interesting to see that they use mostly a similar amount of "trustworthy" words whenever they call (with the exception of some low volume outliers).
+
+Let's see what words are used the most in these calls.
+
+```{r}
+library(wordcloud2)
+
+tokens$word = tm::removeWords(tokens$word, words = c("year", "quarter", stopwords::stopwords("en")))
+
+tokens = tokens[!(is.na(tokens$word) | tokens$word==""), ]
+tokens %>%
+  dplyr::count(word, sort = TRUE) %>%
+  dplyr::filter(n > 25) %>%
+  na.omit() %>%
+  wordcloud2(shape = "star")
+  
+```
+
+> This is interesting to see. Obviously, as a decision-maker for the company, one would want to talk about numbers and performance. Talk of millions (probably of revenue or attendees or viewers), growth, good, increased, well, make up majority of the conversations - which is what I would expect from dozens of investment calls. These words are used by these company leaders to either quantify (in turn, building trust) or build up their selling points to their investors. 
+
+
+## Silver {.tabset .tabset-fade .tabset-pills}
+
+### **Step 3**
+
+Register for a free API key from <a href"https://www.alphavantage.co/documentation/"> alphavantage </a>. Using your API key, get the daily time series for the given ticker and explore the 10 trading days around each call's date (i.e., the closing price for 5 days before the call, the closing price for the day of the call, and the closing price for the 5 days after the call). Do any visible patterns emerge when exploring the closing prices and the sentiment scores you created? Explain what this might mean for people wanting to make decisions based upon a call.
+
+### **Getting Everything into One Dataframe**
+```{r}
+apikey = "136QZNKBPYS40K04"
+link = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=WWE&apikey=136QZNKBPYS40K04&outputsize=full&datatype=csv"
+ticker = read_csv(link)
+
+str(ticker)
+
+ticker = ticker %>%
+  select(timestamp,close)
+
+value_dts = value_table %>%
+  group_by(date) %>%
+  summarize(ave_value = mean(average_value))
+
+dom_dts = dom_table %>%
+  group_by(date) %>%
+  summarize(ave_valence = mean(ave_valence),
+            ave_arousal = mean(ave_arousal),
+            ave_dominance = mean(ave_dominance))
+
+trust_dts = trust_table3 %>%
+  group_by(date) %>%
+  summarize(speakcount = n(),
+            sum_trust = sum(sum_trust),
+            perc_trust = sum_trust/speakcount)
+
+value_dom_dts = value_dts %>%
+  inner_join(dom_dts,by = c("date" = "date"))
+
+all_dts = value_dom_dts %>%
+  inner_join(trust_dts, by = c("date" = "date"))
+
+all_dts2 = all_dts %>%
+  mutate(date_future = date + 5) %>%
+  mutate(date_curr = date) %>%
+  mutate(date_past = date - 5)
+
+all_dts3 = all_dts2 %>%
+  left_join(ticker, by = c("date_future" = "timestamp")) %>%
+  rename("close_future" = "close") %>%
+  left_join(ticker, by = c("date_curr" = "timestamp")) %>%
+  rename("close_curr" = "close") %>%
+  left_join(ticker, by = c("date_past" = "timestamp")) %>%
+  rename("close_past" = "close") %>%
+  select(-speakcount, -sum_trust, -date_future, -date_curr, -date_past)
+```
+
+### **Visualizing Relationships**
+
+In this case, I'll only be testing against 3 scores: ave_value (sentiment score), ave_valence (decided not to use arousal and dominance since valence plays a bigger role in telling a story of a certain call), and per_trust (density of trustworthy words in the call). The values I'm gonna use for closing prices will be the difference of future and current price, as well as the difference of current and past price.
+
+```{r}
+library(ggplot2)
+
+all_dts3 = all_dts3 %>%
+  mutate(future_diff = close_future - close_curr) %>%
+  mutate(past_diff = close_curr - close_past) %>%
+  mutate(ten_day = close_future - close_past)
+```
+
+#### **Average Sentiment Score (ave_value)**
+
+```{r}
+all_dts3 %>%
+  filter((future_diff >= -1) & (future_diff <= 1)) %>%
+  ggplot(mapping = aes(x = ave_value, y = future_diff, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> Removing 2 outlier points, we can see that there's a generally positive relationship between average sentiment and closing price increase. This could mean that a generally positive sentiment could have a good effect on stock and investment prices. The course of the call being relatively positive would - in effect - lead to more trust and increased investment. 
+
+```{r}
+all_dts3 %>%
+  ggplot(mapping = aes(x = past_diff, y = ave_value, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> This says a lot more about our data. If differences in closing prices are high (which means a generally improving market), this could lead to decision-makers being slightly less conscious about how their words sound since these company officers could be more confident in the market and their capabilities (i.e. being complacent from their previous performance, lack or urgency). 
+
+#### **Average Sentiment Score (ave_valence)**
+
+```{r}
+all_dts3 %>%
+  filter(ave_valence > 0.6) %>%
+  ggplot(mapping = aes(x = ave_valence, y = future_diff, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> Again, removing some outliers, this tells us that a higher valence coincides with a slight increase in closing prices. This could mean that a generally positive sentiment in the call could lead to better market performance and increased investments (based on better trust from investors). However, there are some up and down movements caused by extreme values - these could be from external factors that we had not factored into this analysis like current events, market trends, and company events.
+
+```{r}
+all_dts3 %>%
+  ggplot(mapping = aes(x = past_diff, y = ave_valence, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> We can again see a slightly negative relationship between the difference of past and current closing prices and average valence. This means that a better performing market coincided with less "positivity" in each call. This might mean again that decision-makers are being less conscious about the positivity and how much they "sell" their situation (in a sense, lack of urgency) to their investors.
+
+#### **Percentage of Trustworthy Words per Call**
+
+```{r}
+all_dts3 %>%
+  filter(perc_trust <= 10) %>%
+  ggplot(mapping = aes(x = perc_trust, y = future_diff, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> Removing one huge outlier, I saw that the pattern was still similar: a higher density of trustworthy words in calls coincided with a rise in closing prices. However, the data points are very spread out, which does not really give us a definitive insight as to how the density of trustworthy words affects the performance of WWE's stock. 
+
+```{r}
+all_dts3 %>%
+  #filter(past_diff <= 1) %>%
+  filter(perc_trust <= 20) %>%
+  ggplot(mapping = aes(x = past_diff, y = perc_trust, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> Removing one skewing outlier, I saw that the performance of the market leading up to the call negatively affected the density of "trustworthy" words in the call. As in previous analyses, this relationship could mean that good performance of the market leading up to the call would make these decision-makers less urgent of their purpose in the call, leading to less use of trustworthy words.
+
+
+#### Conclusion
+
+This could all mean that market performance may to riskier calls - in essence, decision-makers being less conscious and aware of how much they should hard-sell the business. However, when analyzing future closing prices, there was high correlation with rising closing prices and positive sentiment, valence, and trustworthiness. It may be better for companies not to be fazed by good results in the market, and be more consistent in their selling - especially in these investment calls.
+
+
+## Platinum {.tabset .tabset-fade .tabset-pills}
+
+### **RIP (i.e. cleaning)**
+
+![](https://media.giphy.com/media/l0HU1rimTZLibX4pa/giphy.gif)    <br>
+
+There are two calls within the zip file that you did not use for the previous steps -- they are not already parsed. If you are able to parse them, incorporate them into the rest of your data and determine if any new information comes to light.
+
+```{r}
+library(zoo)
+
+colnames(wwe_raw_27_Oct_16) = "parse"
+raw_oct27 = wwe_raw_27_Oct_16
+raw_jul28 = wwe_raw_28_Jul_16
+
+raw_oct27 = raw_oct27 %>%
+  mutate(ticker = "WWE") %>%
+  mutate(date = as.Date("2016-10-27")) %>%
+  mutate(quarter = "Q3")
+
+oct_execs = raw_oct27[5:7,]
+oct_execs = oct_execs %>%
+  separate(parse, c("name","title")," � ") %>%
+  mutate(organization = "WWE") %>%
+  select(name, organization, title, ticker, date, quarter)
+
+oct_analysts = raw_oct27[9:14,]
+oct_analysts = oct_analysts %>%
+  separate(parse,c("name","organization"), " � ")  %>%
+  mutate(title = "Analyst") %>%
+  select(name, organization, title, ticker, date, quarter)
+
+oct_names = rbind(oct_execs, oct_analysts)
+oct_names = oct_names %>%
+  add_row(name = "Operator",
+          ticker = "WWE",
+          date = as.Date("2016-10-27"),
+          quarter = as.factor("Q3"))
+
+raw_oct27 = raw_oct27 %>%
+  mutate(parse = as.character(parse)) %>%
+  mutate(ticker = as.factor(ticker)) %>%
+  mutate(quarter = as.factor(quarter))
+
+n = dim(raw_oct27)[1]
+raw_oct27 = raw_oct27[15:(n-3),]
+
+raw_oct27$text = NA
+raw_oct27 = raw_oct27 %>%
+  select(parse, text, ticker, date, quarter)
+
+row.names(raw_oct27) <- NULL
+
+# problems with rows 37, 47, 57, 76, 84, 86, 88, 97, 106, 108 + 113 + 117 + 121 + 127 = rob routh, 131, 133, 143, 153, 157
+remove_ws = c(37, 47, 57, 76, 84, 86, 88, 97, 106, 131, 133, 143, 153, 157)
+raw_oct27[remove_ws, 1] = str_trim(raw_oct27[remove_ws, "parse"], side = "right")
+routh_rep = c(108, 113, 117, 121, 127)
+raw_oct27[routh_rep, 1] = "Rob Routh"
+
+name_index = which(raw_oct27$parse %in% oct_names$name)
+
+#raw_oct27_backup = raw_oct27 #JUST FOR BACK UP I'M TIRED OF HAVING TO RE RUN ALL THESE LINES
+
+raw_oct27$text = raw_oct27$parse
+raw_oct27[-name_index, "parse"] = NA
+
+raw_oct27$parse = na.locf(raw_oct27$parse)
+
+raw_oct27 = raw_oct27[-name_index, ]
+row.names(raw_oct27) <- NULL
+
+raw_oct27 = raw_oct27 %>%
+  mutate(text = ifelse(parse == lead(parse), paste(text, lead(text), sep = " "), text))
+
+raw_oct27[-1,] = raw_oct27[-1,] %>%
+  mutate(text = ifelse(parse == lag(parse), NA, text))
+
+parsed_oct27 = raw_oct27 %>%
+  drop_na(text) %>%
+  rename("name" = "parse") %>%
+  filter(name != "Operator")
+
+oct_names = oct_names %>%
+  select(name, organization, title)
+
+parsed_oct27 = parsed_oct27 %>%
+  inner_join(oct_names, by = ("name" = "name")) %>%
+  select(name, organization, title, text, date, quarter)
+
+parsed_oct27$title = gsub(".*Executive.*","CEO", parsed_oct27$title)
+parsed_oct27$title = gsub(".*Strategy and Financial.*","CFO", parsed_oct27$title)
+parsed_oct27$title = gsub(".*Planning.*","VP - Planning and Investor Relations", parsed_oct27$title)
+```
+
+```{r}
+raw_jul28 = wwe_raw_28_Jul_16
+
+raw_jul28 = raw_jul28 %>%
+  mutate(ticker = "WWE") %>%
+  mutate(date = as.Date("2016-07-28")) %>%
+  mutate(quarter = "Q2")
+
+colnames(raw_jul28) = c("parse", "ticker", "date", "quarter")
+
+jul_execs = raw_jul28[5:7,]
+jul_execs = jul_execs %>%
+  separate(parse, c("name","title")," - ") %>%
+  mutate(organization = "WWE") %>%
+  select(name, organization, title, ticker, date, quarter)
+
+jul_analysts = raw_jul28[9:14,]
+jul_analysts = jul_analysts %>%
+  separate(parse,c("name","organization"), " - ")  %>%
+  mutate(title = "Analyst") %>%
+  select(name, organization, title, ticker, date, quarter)
+
+jul_names = rbind(jul_execs, jul_analysts)
+jul_names = jul_names %>%
+  add_row(name = "Operator",
+          ticker = "WWE",
+          date = as.Date("2016-07-28"),
+          quarter = as.factor("Q2"))
+
+raw_jul28 = raw_jul28 %>%
+  mutate(parse = as.character(parse)) %>%
+  mutate(ticker = as.factor(ticker)) %>%
+  mutate(quarter = as.factor(quarter))
+
+n = dim(raw_jul28)[1]
+raw_jul28 = raw_jul28[15:(n-3),]
+
+raw_jul28$text = NA
+raw_jul28 = raw_jul28 %>%
+  select(parse, text, ticker, date, quarter)
+
+row.names(raw_jul28) <- NULL
+
+name_index = which(raw_jul28$parse %in% jul_names$name)
+
+raw_jul28$text = raw_jul28$parse
+raw_jul28[-name_index, "parse"] = NA
+
+raw_jul28$parse = na.locf(raw_jul28$parse)
+
+raw_jul28 = raw_jul28[-name_index, ]
+row.names(raw_jul28) <- NULL
+
+raw_jul28[1:72,] = raw_jul28[1:72,] %>%
+  mutate(text = ifelse(parse == lead(parse), paste(text, lead(text), sep = " "), text))
+
+raw_jul28[-1,] = raw_jul28[-1,] %>%
+  mutate(text = ifelse(parse == lag(parse), NA, text))
+
+parsed_jul28 = raw_jul28 %>%
+  drop_na(text) %>%
+  rename("name" = "parse") %>%
+  filter(name != "Operator")
+
+jul_names = jul_names %>%
+  select(name, organization, title)
+
+parsed_jul28 = parsed_jul28 %>%
+  inner_join(jul_names, by = ("name" = "name")) %>%
+  select(name, organization, title, text, date, quarter)
+
+parsed_jul28$title = gsub(".*CEO.*","CEO", parsed_jul28$title)
+parsed_jul28$title = gsub(".*Strategy and Financial.*","CFO", parsed_jul28$title)
+parsed_jul28$title = gsub(".*Planning.*","VP - Planning and Investor Relations", parsed_jul28$title)
+
+parsed_new = parsed_jul28 %>%
+  rbind(parsed_oct27)
+
+parsed_new$name = tolower(parsed_new$name)
+
+parsed_new$name = gsub(".*moore.*","dan moore", parsed_new$name)
+parsed_new$name = gsub(".*routh.*","robert routh", parsed_new$name)
+
+### FINALLY
+```
+
+
+```{r}
+parsed_new$id = NA
+parsed_new$gender = NA
+parsed_new$likelyRace = NA
+parsed_new$likelyRaceProb = NA
+
+parsed_new = parsed_new %>%
+  select(id, name, organization, title, text, gender, likelyRace, likelyRaceProb, date, quarter)
+
+allfiles_new = allfiles %>%
+  rbind(parsed_new)
+
+allfiles_new = allfiles_new %>%
+  select(-id)
+
+allfiles_new = allfiles_new %>%
+  mutate(id = 1:n()) %>%
+  select(id, everything())
+
+new_text = allfiles_new %>%
+  select(id, text) 
+
+tokens2 = new_text %>%
+  tidytext::unnest_tokens(tbl = ., output = word, input = text)
+
+value_tokens2 = tokens2 %>%
+  inner_join(nrcValues, by = c("word" = "x")) %>%
+  group_by(id) %>%
+  summarize(average_value = mean(y))
+
+value_table2 = allfiles_new %>%
+  inner_join(value_tokens2, by = c("id" = "id"))
+
+dom_tokens2 = tokens2 %>%
+  inner_join(nrcDominance, by = c("word" = "Word")) %>%
+  group_by(id) %>%
+  summarize(ave_valence = mean(Valence),
+            ave_arousal = mean(Arousal),
+            ave_dominance = mean(Dominance))
+
+dom_table2 = allfiles_new %>%
+  inner_join(dom_tokens2, by = c("id" = "id"))
+
+trust_table_new = tokens2 %>%
+  left_join(trust_words, by = c("word" = "word"))
+
+trust_table_new$sentiment[trust_table_new$sentiment == "trust"] = 1
+trust_table_new$sentiment[is.na(trust_table_new$sentiment)] = 0
+
+trust_table_new = trust_table_new %>%
+  rename("trust" = "sentiment") %>%
+  mutate(trust = as.numeric(trust))
+
+trust_table_new = trust_table_new %>%
+  group_by(id) %>%
+  summarize(sum_trust = sum(trust))
+
+trust_table_new = allfiles_new %>%
+  inner_join(trust_table_new, by = c("id" = "id"))
+
+alltable = trust_table_new %>%
+  inner_join(value_tokens2, by = c("id" = "id"))
+
+alltable = alltable %>%
+  inner_join(dom_tokens2, by = c("id" = "id"))
+
+alltable = alltable %>%
+  select(id, name, organization, title, text, date, quarter, sum_trust, average_value, ave_valence)
+```
+
+### **Analysis**
+
+Let's see if our 2 additional calls would change anything with the following within groups and against closing prices:  
+1. ave_value
+2. ave_valence  
+3. perc_trust
+
+I'll also see if the 2 additional calls have a different frequency of words with the previously analyzed group of calls with another wordcloud.
+
+#### **Average_Value**
+
+For this analysis, I'll hold off on analyzing each call because this would not tell me much about the effect of the calls on other groups.
+
+```{r}
+value_name2 = alltable %>%
+  na.omit() %>%
+  group_by(name, title) %>%
+  summarize(average_value = mean(average_value)) %>%
+  arrange(desc(average_value))
+
+paged_table(value_name2)
+```
+
+> We can see here that Analysts still generally have a sporadic distribution in terms of their value in sentiment. Let's see our results again without any analysts.
+
+```{r}
+value_name_noanalyst2 = alltable %>%
+  na.omit() %>%
+  filter(title != "Analyst") %>%
+  group_by(name, title) %>%
+  summarize(average_value = mean(average_value)) %>%
+  arrange(desc(average_value))
+
+paged_table(value_name_noanalyst2)
+```
+
+> Again, we can see that there are two sets of people with high sentiment value in the table: (1) Investor Relations personnel and (2) main leadership - CEO and COO. As the faces of the company for the investors, they have to be aware of what they talk about and how they talk about it and sell their company in the best way possible.
+
+
+```{r}
+value_org2 = alltable %>%
+  na.omit() %>%
+  group_by(organization) %>%
+  summarize(average_value = mean(average_value)) %>%
+  arrange(desc(average_value))
+
+paged_table(value_org2)
+```
+
+> We can see that WWE's average sentiment after the two additional calls did not improve by much (just a .006-ish difference).
+
+#### **Average Valence**
+
+```{r}
+dom_name2 = alltable %>%
+  na.omit() %>%
+  group_by(name, title) %>%
+  summarize(ave_valence = mean(ave_valence)) %>%
+  arrange(desc(ave_valence))
+
+paged_table(dom_name2)
+```
+
+> We can see that analysts still have a wide range of valence. Also, in terms of WWE officials, those in the planning and investor relations department (with the exception of michele goldstein) seem to have very high positivity in the calls, as well as some leadership/board officials. There seems to be a better mix of valence among company officials though, as compared to the sentiment in the earlier analysis.
+
+Since the two additional calls were in quarters 2 and 3, let's see if it made a change in how quarterly calls sounded.
+
+```{r}
+dom_quart2 = alltable %>%
+  na.omit() %>%
+  group_by(quarter) %>%
+  summarize(ave_valence = mean(ave_valence)) %>%
+  arrange(desc(ave_valence))
+
+paged_table(dom_quart2)
+```
+
+> They all still have very similar average valences, with quarter 1 suddenly having the highest average. It could mean that these two calls brought the valence rating of their respective quarters down.
+
+```{r}
+dom_calls2 = alltable %>%
+  na.omit() %>%
+  group_by(date) %>%
+  summarize(ave_valence = mean(ave_valence)) %>%
+  arrange(desc(ave_valence))
+
+paged_table(dom_calls2)
+```
+
+> This shows that the two calls fell towards the latter half (but not too far down) of calls in terms of average valence. It may just mean that the calls/quarters are all very similar.
+
+#### **Density of Trustworthy Words**
+
+```{r}
+trust_name2 = alltable %>%
+  na.omit() %>%
+  group_by(name, title) %>%
+  summarize(speakcount = n(),
+            sum_trust = sum(sum_trust),
+            perc_trust = sum_trust/speakcount) %>%
+  filter(speakcount > 1) %>%
+  arrange(desc(perc_trust))
+
+paged_table(trust_name2)
+```
+
+> Filtering out those with low volume speaking roles, I can see that majority of those at the top of the list are leaders of the company (as opposed to analysts/investors). This makes sense in that these decision-makers try to maximize these calls by using their words to gain the trust of their stakeholders. They try to sound as reputable and reliable as possible in what they say and in what their roles are (e.g. role of Chairman and other main leadership positions vs role of CFOs).
+
+
+```{r}
+trust_org2 = alltable %>%
+  na.omit() %>%
+  group_by(organization) %>%
+  summarize(speakcount = n(),
+            sum_trust = sum(sum_trust),
+            perc_trust = sum_trust/speakcount) %>%
+  filter(speakcount > 1) %>%
+  arrange(desc(perc_trust))
+
+paged_table(trust_org2)
+```
+
+> With the two calls, WWE's average density of trust raised by nearly 50% (from 4.5% to 6.5%). There must be a lot more trustworthy words in these two calls (this could mean a lot of different things - a sense of urgency, increase in performance from the company leading to more information communicated, lowering stock prices, among others). Let's see what words pop out when we test the two calls.
+
+#### **Word Cloud**
+
+```{r}
+library(wordcloud2)
+
+parsed_new2 = parsed_new %>%
+  mutate(id = 1:n())
+
+parsed_text = parsed_new2 %>%
+  select(id, text)
+
+tokens3 = parsed_text %>%
+  tidytext::unnest_tokens(tbl = ., output = word, input = text)
+  
+tokens3$word = tm::removeWords(tokens3$word, words = c("year", "quarter", stopwords::stopwords("en")))
+
+tokens3 = tokens3[!(is.na(tokens3$word) | tokens3$word==""), ]
+
+tokens3 %>%
+  dplyr::count(word, sort = TRUE) %>%
+  dplyr::filter(n > 5) %>%
+  na.omit() %>%
+  wordcloud2(shape = "star")
+```
+
+> Million takes a step back in this case. Words that were directly related to the company's events are not as widely used in this case. The company's situation is more described with business terms - possibly seeming more relatable and reliable to the investors. These investors don't have much to relate to when it comes to who won last night's main event or what these events are called, but they do know a lot about network deals, media content, and business partnerships.
+
+#### **Closing Price Analysis** {.tabset .tabset-fade .tabset-pills}
+
+##### **Creating Table**
+
+```{r}
+ticker = ticker %>%
+  select(timestamp,close)
+
+value_dts = value_table %>%
+  group_by(date) %>%
+  summarize(ave_value = mean(average_value))
+
+dom_dts = dom_table %>%
+  group_by(date) %>%
+  summarize(ave_valence = mean(ave_valence),
+            ave_arousal = mean(ave_arousal),
+            ave_dominance = mean(ave_dominance))
+
+trust_dts = trust_table3 %>%
+  group_by(date) %>%
+  summarize(speakcount = n(),
+            sum_trust = sum(sum_trust),
+            perc_trust = sum_trust/speakcount)
+
+alltable_dts = alltable %>%
+  group_by(date) %>%
+  summarize(ave_value = mean(average_value),
+            ave_valence = mean(ave_valence),
+            speakcount = n(),
+            sum_trust = sum(sum_trust),
+            perc_trust = sum_trust/speakcount)
+
+alltable_dts2 = alltable_dts %>%
+  mutate(date_future = date + 5) %>%
+  mutate(date_curr = date) %>%
+  mutate(date_past = date - 5)
+
+alltable_dts3 = alltable_dts2 %>%
+  left_join(ticker, by = c("date_future" = "timestamp")) %>%
+  rename("close_future" = "close") %>%
+  left_join(ticker, by = c("date_curr" = "timestamp")) %>%
+  rename("close_curr" = "close") %>%
+  left_join(ticker, by = c("date_past" = "timestamp")) %>%
+  rename("close_past" = "close") %>%
+  select(-speakcount, -sum_trust, -date_future, -date_curr, -date_past)
+
+alltable_dts3 = alltable_dts3 %>%
+  mutate(future_diff = close_future - close_curr) %>%
+  mutate(past_diff = close_curr - close_past) %>%
+  mutate(ten_day = close_future - close_past)
+
+```
+
+##### **Visualizing Relationships** 
+
+Again, I'll only be testing against 3 scores: ave_value, ave_valence, and per_trust. The values I'm gonna use for closing prices will be the difference of future and current price, as well as the difference of current and past price. I decided not to use the ten-day difference in this case because a lot of NA values show up.
+
+**Average Sentiment Score (ave_value)**
+
+```{r}
+alltable_dts3 %>%
+  #filter((future_diff >= -1) & (future_diff <= 1)) %>%
+  ggplot(mapping = aes(x = ave_value, y = future_diff, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> The relationship, while positive, does not show much of an effect on future closing prices, as the points are rather spread out. Majority are also in the middling area of the group of data points.
+
+```{r}
+alltable_dts3 %>%
+  ggplot(mapping = aes(x = past_diff, y = ave_value, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> This still gives us an understanding of how calls go after positive and negative market shifts. When the status of the company is lower than 5 days prior, the average sentiment goes up. It also goes up when the difference between past and current closing prices trend towards 1. Without those outliers, it would be more apparent that past_diff has a negative effect on average sentiment (which may be caused by a lack of urgency of the company).
+
+#### **Average Sentiment Score (ave_valence)**
+
+```{r}
+alltable_dts3 %>%
+  #filter(ave_valence > 0.6) %>%
+  ggplot(mapping = aes(x = ave_valence, y = future_diff, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> The curve becomes negatiev, but has some points in the middle that either shoot up or down. This may be caused by other factors other than valence. However, even if we remove those points, the trend of the curve will still be negative. This could tell me that the higher the positivity is in the call (with valence), the less invested these analysts are in the WWE. Maybe they can sense that the company is grasping at straws in terms of their "selling" of the company.
+
+```{r}
+alltable_dts3 %>%
+  ggplot(mapping = aes(x = past_diff, y = ave_valence, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> We can still see a slightly negative relationship between the two variables, with a trend up towards 1 in terms of difference of past and current closing prices. This may disprove my theory above that the company is grasping at straws (though it does not say anything about how the analysts felt, whether or not the company was feeling urgency or not). 
+
+#### **Percentage of Trustworthy Words per Call**
+
+```{r}
+alltable_dts3 %>%
+  filter(perc_trust <= 10) %>%
+  ggplot(mapping = aes(x = perc_trust, y = future_diff, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> Again, removing the outlier, we can see that a trend is rather minimal - with future_diff fluctuating despite perc_trust increasing. 
+
+```{r}
+alltable_dts3 %>%
+  #filter(past_diff <= 1) %>%
+  filter(perc_trust <= 20) %>%
+  ggplot(mapping = aes(x = past_diff, y = perc_trust, na.rm = TRUE)) +
+  geom_point() + 
+  geom_smooth(col = "red") + 
+  geom_smooth(method = "lm")
+```
+
+> Again removing one skewing outlier, I saw that the performance of the market leading up to the call still negatively affected the density of "trustworthy" words in the call. As in previous analyses, this relationship could mean that good performance of the market leading up to the call would make these decision-makers less urgent of their purpose in the call, leading to less use of trustworthy words. The curve does go up then back down right around the 0 mark, showing that when previous closing prices are greater than current prices, more trustworthy words are still used in calls (though it rises when the difference is close to zero), and vice versa. This still confirms my insight that good performance could lead to a lack of urgency among decision-makers and affects the content of their conversations.
+
+
+#### Conclusion
+
+My insights on the market still haven't changed with the two additional calls. I was able to see that the trends were very similar with previous analyses, and led to the conclusion that companies perform better when there is a sense of urgency with their calls - as they are more aware of what they have to say and how they say it. When their company is performing better, the WWE loses that sense of urgency and the leaders do not make use of a lot of trustworthy words when they call - possible because of excitement, complacency, or just a general stabilizing lack of trust from seasoned analysts.
+
+
+But we all know what happens when Vince McMahon gets too excited...
+
+![](https://media.giphy.com/media/xB1RqLGoBNh3W/giphy.gif)
+
+
